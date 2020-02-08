@@ -1,0 +1,48 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="Generates a class including a special informational header" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Text" %>
+<%@ Property Name="NameSpace" Type="String" Category="Context" Description="命名空间" %>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+/*------------------------------------------------
+// 文件名称：OperatorMessage.cs
+// 文件描述：数据访问层操作方法返回数据
+// 作者:柳创义
+// 创建时间：<%= DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")%>
+
+//------------------------------------------------*/
+namespace <%=NameSpace%>.Model.Common
+{
+    public class OperatorMessage
+    {
+        /// <summary>
+        /// 操作结果
+        /// </summary>
+        public bool Result { set; get; }
+        /// <summary>
+        /// 消息代码
+        /// </summary>
+        public int Code { set; get; }
+        /// <summary>
+        /// 操作信息
+        /// </summary>
+        public string Message { set; get; }
+        /// <summary>
+        /// 自定义消息对象
+        /// </summary>
+        public object Tag { set; get; }
+        /// <summary>
+        /// 受影响行数
+        /// </summary>
+        public int AffectRows { set; get; }
+        /// <summary>
+        /// 响应数据
+        /// </summary>       
+        public object ResponseData{set;get;}
+
+    }
+
+}

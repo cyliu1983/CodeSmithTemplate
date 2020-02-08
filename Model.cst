@@ -1,0 +1,112 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="Generates a class including a special informational header" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Text" %>
+<%@ Property Name="NameSpace" Type="String" Category="Context" Description="命名空间" %>
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" DeepLoad="True" Optional="False" Category="Context" Description="源表名称" %>
+<%@ Property Name="TablePrefix" Type="System.String" Default="T" Category="Context" Description="需要移除的表名前辍" %>
+/*------------------------------------------------
+// 文件名称：<%=ClearPrefix(SourceTable.Name) %>Model.cs
+// 文件描述：<%=SourceTable.Description %>数据实体类
+// 作者:柳创义
+// 创建时间：<%= DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")%>
+//------------------------------------------------*/
+ 
+using System;
+ 
+namespace <%=NameSpace%>.Model
+{
+   /// <summary>
+   /// <%=SourceTable.Description %>
+   /// </summary>
+   [Serializable]
+   public partial class <%=ClearPrefix(SourceTable.Name) %>Model
+   {
+  		#region 私有属性
+  		<%for(int i=0;i<SourceTable.Columns.Count;i++){%>
+  		private <%=CSharpType(SourceTable.Columns[i])%> _<%=SourceTable.Columns[i].Name.Substring(0,1).ToLower()+SourceTable.Columns[i].Name.Substring(1,SourceTable.Columns[i].Name.Length-1)%>;
+  		<%}%>
+  		#endregion 私有属性
+  
+  		#region 结构	
+  		/// <summary>
+  		/// <%=ClearPrefix(SourceTable.Name) %> Constructor
+  		/// </summary>
+    	public <%=ClearPrefix(SourceTable.Name) %>Model()
+    	{
+    	}
+		
+  		/// <summary>
+  		/// <%=ClearPrefix(SourceTable.Name) %> Constructor With Parameters
+  		/// </summary>
+  		<%for(int i=0;i<SourceTable.Columns.Count;i++){%>
+  		///<param name="<%=SourceTable.Columns[i].Name.Substring(0,1).ToLower()+SourceTable.Columns[i].Name.Substring(1,SourceTable.Columns[i].Name.Length-1)%>"><%if(SourceTable.Columns[i].Description.Length>0){%><%=SourceTable.Columns[i].Name+"  "+SourceTable.Columns[i].Description%><%}else{%><%=SourceTable.Columns[i].Name%><%}%></param>
+  		<%}%>
+  		public <%=ClearPrefix(SourceTable.Name) %>Model(<%for(int i=0;i<SourceTable.Columns.Count;i++){%><%=CSharpType(SourceTable.Columns[i])%> <%=SourceTable.Columns[i].Name.Substring(0,1).ToLower()+SourceTable.Columns[i].Name.Substring(1,SourceTable.Columns[i].Name.Length-1)%><% if (i < SourceTable.Columns.Count - 1) { %>,<%}%><%}%>)
+  		{
+  		<%for(int i=0;i<SourceTable.Columns.Count;i++){%>
+   		this._<%=SourceTable.Columns[i].Name.Substring(0,1).ToLower()+SourceTable.Columns[i].Name.Substring(1,SourceTable.Columns[i].Name.Length-1)%> = <%=SourceTable.Columns[i].Name.Substring(0,1).ToLower()+SourceTable.Columns[i].Name.Substring(1,SourceTable.Columns[i].Name.Length-1)%>;
+  		<%}%>
+  		}
+  		#endregion 结构
+    
+  		#region 公共属性
+        <%for(int i=0;i<SourceTable.Columns.Count;i++){%>
+  		///<Summary>
+  		/// <%=SourceTable.Columns[i].Name%><%if(SourceTable.Columns[i].Description.Length>0){%>
+  		/// <%=SourceTable.Columns[i].Description%><%}%>
+  		///</Summary>
+ 		public <%=CSharpType(SourceTable.Columns[i]).Trim()%> <%=SourceTable.Columns[i].Name%>
+  		{
+  		get { return _<%=SourceTable.Columns[i].Name.Substring(0,1).ToLower()+SourceTable.Columns[i].Name.Substring(1,SourceTable.Columns[i].Name.Length-1)%>; }
+   		set {  _<%=SourceTable.Columns[i].Name.Substring(0,1).ToLower()+SourceTable.Columns[i].Name.Substring(1,SourceTable.Columns[i].Name.Length-1)%> = value; }
+  		}
+		<%}%>
+  		#endregion 公共属性
+   }
+}
+<script runat="template">
+public string CSharpType(ColumnSchema column)
+{
+ if (column.Name.EndsWith("TypeCode")) return column.Name;
+ switch (column.DataType)
+ {
+  case DbType.AnsiString:
+  case DbType.String:
+  case DbType.StringFixedLength:
+  case DbType.AnsiStringFixedLength: return "string";
+ 
+  case DbType.VarNumeric:
+  case DbType.Currency:
+  case DbType.Decimal: return "decimal?";
+ 
+  case DbType.Binary: return "byte[]";
+  case DbType.Boolean: return "bool?";
+  case DbType.Byte: return "byte";
+  case DbType.Date: return "DateTime?";
+  case DbType.DateTime: return "DateTime?";
+  case DbType.Double: return "double";
+  case DbType.Guid: return "Guid";
+  case DbType.Int16: return "short";
+  case DbType.Int32: return "int?";
+  case DbType.Int64: return "long";
+  case DbType.Object: return "object";
+  case DbType.SByte: return "sbyte";
+  case DbType.Single: return "float";
+  case DbType.Time: return "TimeSpan";
+  case DbType.UInt16: return "ushort";
+  case DbType.UInt32: return "uint";
+  case DbType.UInt64: return "ulong";
+  default:
+  {
+   return "__UNKNOWN__" + column.NativeType;
+  }
+ }
+}
+public string ClearPrefix(string name)
+{
+    int mIndex=name.IndexOf(TablePrefix);
+    string strResult=name.Remove(0,TablePrefix.Length);
+    return strResult;
+}
+</script>

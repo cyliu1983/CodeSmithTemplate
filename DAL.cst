@@ -1,0 +1,515 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="Generates a class including a special informational header" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import NameSpace="SchemaExplorer" %>
+<%@ Import NameSpace="System.Text" %>
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Default="" Optional="False" Category="Context" Description="源表名" %>
+<%@ Property Name="NameSpace" Type="String" Category="Context" Description="命名空间" %>
+<%@ Property Name="TablePrefix" Type="System.String" Default="T" Category="Context" Description="需要去除的表名前辍" %>
+/*------------------------------------------------
+// 文件名称：<%=ClearPrefix(SourceTable.Name) %>DAL.cs
+// 文件描述：<%=SourceTable.Description %>数据操作类
+// 作者:柳创义　　邮箱：99692145@qq.com
+// 创建时间：<%= DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")%>
+//------------------------------------------------*/
+
+using System;
+using System.Data;
+using System.Text;
+using System.Data.SqlClient;
+using System.Collections.Generic;
+using System.Collections;
+using <%=NameSpace%>.Model;
+using <%=NameSpace%>.Model.Common;
+
+namespace <%=NameSpace%>.Dal
+{
+    /// <summary>
+    /// 数据访问类:Client
+    /// </summary>
+    public partial class <%=ClearPrefix(SourceTable.Name) %>DAL
+    {
+        public <%=ClearPrefix(SourceTable.Name) %>DAL()
+        { }
+        #region  基本方法
+
+        /// <summary>
+        /// 得到最大ID
+        /// </summary>
+        public int GetMaxId()
+        {
+            return DbHelperSQL.GetMaxID("<%=GetPrimaryKey() %>", "<%=SourceTable.Name %>");
+        }
+
+        /// <summary>
+        /// 是否存在该记录(修改时判断)
+        /// </summary>
+        public bool Exists(int? <%=GetPrimaryKey() %>)
+        {
+            StringBuilder strSql = new StringBuilder();
+            strSql.Append("select count(1) from <%=SourceTable.Name%> ");
+            strSql.Append(" where <%=GetPrimaryKey() %>=" + <%=GetPrimaryKey() %> + "");
+            return DbHelperSQL.Exists(strSql.ToString());
+        }
+
+        /// <summary>
+        /// 增加一条数据
+        /// </summary>
+        public OperatorMessage Add(<%=NameSpace%>.Model.<%=ClearPrefix(SourceTable.Name) %>Model model)
+        {
+            StringBuilder strSql, strField, strValue;
+
+            strSql = new StringBuilder();
+            strField = new StringBuilder();
+            strValue = new StringBuilder();
+
+            model.<%=GetPrimaryKey() %> = GetMaxId();
+            
+            <%for (int i=0; i <  SourceTable.Columns.Count; i++){ %>
+            if (model.<%=SourceTable.Columns[i].Name %> != null)
+            {
+                strField.Append("<%=SourceTable.Columns[i].Name %>,");               
+                <%string a=GetDataType(SourceTable.Columns[i]); %>              
+                <%if (a=="int") { %>
+                strValue.Append(""+model.<%=SourceTable.Columns[i].Name %>+", ");
+                <%} else { %>
+                strValue.Append("'"+model.<%=SourceTable.Columns[i].Name %>+"', ");
+                <%} %>                
+            }
+            
+            <%} %>            
+            strSql.Append("insert into <%=SourceTable.Name %>(");
+            strSql.Append(strField.ToString().Remove(strField.Length - 1));
+            strSql.Append(")");
+            strSql.Append(" values (");
+            strSql.Append(strValue.ToString().Remove(strValue.Length - 1));
+            strSql.Append(")");
+
+            OperatorMessage op = new OperatorMessage();
+
+            op.AffectRows = DbHelperSQL.ExecuteSql(strSql.ToString());
+
+            if (op.AffectRows > 0)
+            {
+                op.Result = true;
+                op.Code = 1;
+                op.Message = "操作成功";
+            }
+            else
+            {
+                op.Result = false;
+                op.Code = 0;
+                op.Message = "操作失败";
+            }
+
+            return op;
+        }
+
+        /// <summary>
+        /// 更新一条数据
+        /// </summary>
+        public OperatorMessage Update(<%=NameSpace%>.Model.<%=ClearPrefix(SourceTable.Name) %>Model model)
+        {
+            StringBuilder strSql;
+            
+            strSql = new StringBuilder();   
+            
+            strSql.Append("update <%=SourceTable.Name %> set "); 
+            <%for (int i=0; i <  SourceTable.Columns.Count; i++){ %>            
+            <%if (SourceTable.Columns[i].Name!=GetPrimaryKey()) { %>  
+            
+            if (model.<%=SourceTable.Columns[i].Name%> != null)
+            {
+                <%string a=GetDataType(SourceTable.Columns[i]); %>              
+                <%if (a=="int") { %>
+                strSql.Append("<%=SourceTable.Columns[i].Name%>=" + model.<%=SourceTable.Columns[i].Name%> + ",");
+                <%} else { %>
+                strSql.Append("<%=SourceTable.Columns[i].Name%>='" + model.<%=SourceTable.Columns[i].Name%> + "',");
+                <%} %>
+            }
+            
+            <%} %>        
+            <%} %>
+
+            int n = strSql.ToString().LastIndexOf(",");
+            
+            strSql.Remove(n, 1);
+            
+            strSql.Append(" where <%=GetPrimaryKey() %>=" + model.<%=GetPrimaryKey() %> + " ");
+
+            OperatorMessage op = new OperatorMessage();
+
+            op.AffectRows = DbHelperSQL.ExecuteSql(strSql.ToString());
+
+            if (op.AffectRows > 0)
+            {
+                op.Result = true;
+                op.Code = 1;
+                op.Message = "操作成功";
+            }
+            else
+            {
+                op.Result = false;
+                op.Code = 0;
+                op.Message = "操作失败";
+            }
+
+            return op;
+        }
+
+        /// <summary>
+        /// 删除一条数据
+        /// </summary>
+        public OperatorMessage Delete(int <%=GetPrimaryKey() %>)
+        {
+
+            StringBuilder strSql = new StringBuilder();
+
+            strSql = new StringBuilder();
+            strSql.Append("delete from <%=SourceTable.Name %> ");
+            strSql.Append(" where <%=GetPrimaryKey() %>=" + <%=GetPrimaryKey() %> + " ");
+
+            OperatorMessage op = new OperatorMessage();
+
+            op.AffectRows = DbHelperSQL.ExecuteSql(strSql.ToString());
+
+            if (op.AffectRows > 0)
+            {
+                op.Result = true;
+                op.Code = 1;
+                op.Message = "操作成功";
+            }
+            else
+            {
+                op.Result = false;
+                op.Code = 0;
+                op.Message = "操作失败";
+            }
+
+            return op;
+        }
+        
+        /// <summary>
+        /// 批量删除数据
+        /// </summary>
+        public bool DeleteList(string <%=GetPrimaryKey() %>list)
+        {
+            StringBuilder strSql = new StringBuilder();
+            
+            strSql.Append("delete from <%=SourceTable.Name %> ");
+            strSql.Append(" where <%=GetPrimaryKey() %> in (" + <%=GetPrimaryKey() %>list + ")  ");
+            
+            int rows = DbHelperSQL.ExecuteSql(strSql.ToString());
+            
+            if (rows > 0)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+
+        /// <summary>
+        /// 得到一个对象实体
+        /// </summary>
+        public <%=NameSpace%>.Model.<%=ClearPrefix(SourceTable.Name) %>Model GetModel(int <%=GetPrimaryKey() %>)
+        {
+            StringBuilder strSql = new StringBuilder();
+            
+            strSql.Append("select  top 1  ");
+            
+            <%for (int i=0; i <  SourceTable.Columns.Count; i++){ %>
+            <%if (i==SourceTable.Columns.Count-1){ %>
+            strSql.Append("<%=SourceTable.Columns[i].Name %> ");
+            <%} else { %>
+            strSql.Append("<%=SourceTable.Columns[i].Name %>, ");
+            <%} %>
+            <%} %>            
+           
+            strSql.Append(" from <%=SourceTable.Name %> ");
+            strSql.Append(" where <%=GetPrimaryKey() %>=" + <%=GetPrimaryKey() %> + "");
+            
+            <%=NameSpace%>.Model.<%=ClearPrefix(SourceTable.Name) %>Model model = new <%=NameSpace%>.Model.<%=ClearPrefix(SourceTable.Name) %>Model();
+            
+            DataSet ds = DbHelperSQL.Query(strSql.ToString());
+            
+            if (ds.Tables[0].Rows.Count > 0)
+            {
+                return DataRowToModel(ds.Tables[0].Rows[0]);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 得到一个对象实体
+        /// </summary>
+        public <%=NameSpace%>.Model.<%=ClearPrefix(SourceTable.Name) %>Model DataRowToModel(DataRow row)
+        {
+            <%=NameSpace%>.Model.<%=ClearPrefix(SourceTable.Name) %>Model model = new <%=NameSpace%>.Model.<%=ClearPrefix(SourceTable.Name) %>Model();            
+            if (row != null)
+            {
+                <%for (int i=0; i <  SourceTable.Columns.Count; i++){ %>
+                <%switch(SourceTable.Columns[i].DataType.ToString()){ %>                    
+                <%case "Int32" : %>
+                if (row["<%=SourceTable.Columns[i].Name %>"] != null && row["<%=SourceTable.Columns[i].Name %>"].ToString() != "")
+                {
+                    model.<%=SourceTable.Columns[i].Name %> = int.Parse(row["<%=SourceTable.Columns[i].Name %>"].ToString());                    
+                }
+                
+                <%break; %>
+                <%case "DateTime" : %>
+                if (row["<%=SourceTable.Columns[i].Name %>"] != null && row["<%=SourceTable.Columns[i].Name %>"].ToString() != "")
+                {
+                    model.<%=SourceTable.Columns[i].Name %> = DateTime.Parse(row["<%=SourceTable.Columns[i].Name %>"].ToString());                    
+                }
+                
+                <%break; %>
+                <%case "Decimal" : %>
+                if (row["<%=SourceTable.Columns[i].Name %>"] != null && row["<%=SourceTable.Columns[i].Name %>"].ToString() != "")
+                {
+                    model.<%=SourceTable.Columns[i].Name %> = Decimal.Parse(row["<%=SourceTable.Columns[i].Name %>"].ToString());                    
+                }
+                
+                <%break; %>
+                <%case "Boolean" : %>      
+                if (row["<%=SourceTable.Columns[i].Name %>"] != null && row["<%=SourceTable.Columns[i].Name %>"].ToString() != "")
+                {
+                    if ((row["<%=SourceTable.Columns[i].Name %>"].ToString() == "1") || (row["<%=SourceTable.Columns[i].Name %>"].ToString().ToLower() == "<%=SourceTable.Columns[i].Name %>"))
+                    {
+                        model.<%=SourceTable.Columns[i].Name %> = true;
+                    }
+                    else
+                    {
+                        model.<%=SourceTable.Columns[i].Name %> = false;
+                    }                    
+                }
+                
+                <%break; %>
+                <%default: %>
+                if (row["<%=SourceTable.Columns[i].Name %>"] != null)
+                {
+                    model.<%=SourceTable.Columns[i].Name %> = row["<%=SourceTable.Columns[i].Name %>"].ToString();
+                    
+                }
+                
+                <%break; %>
+                <%} %>                    
+                <%} %>
+            }
+            return model;
+        }
+
+        /// <summary>
+        /// 获得数据列表
+        /// </summary>
+        public DataSet GetList(string strWhere)
+        {
+            StringBuilder strSql = new StringBuilder();
+            strSql.Append("select ");
+            <%for (int i=0; i <  SourceTable.Columns.Count; i++){ %>
+            <%if (i==SourceTable.Columns.Count-1){ %>
+            strSql.Append("<%=SourceTable.Columns[i].Name %> ");
+            <%} else { %>
+            strSql.Append("<%=SourceTable.Columns[i].Name %>, ");
+            <%} %>
+            <%} %>     
+            strSql.Append(" FROM <%=SourceTable.Name %> ");
+            if (strWhere.Trim() != "")
+            {
+                strSql.Append(" where " + strWhere);
+            }
+            return DbHelperSQL.Query(strSql.ToString());
+        }
+
+        /// <summary>
+        /// 获得前几行数据
+        /// </summary>
+        public DataSet GetList(int Top, string strWhere, string filedOrder)
+        {
+            StringBuilder strSql = new StringBuilder();
+            strSql.Append("select ");
+            if (Top > 0)
+            {
+                strSql.Append(" top " + Top.ToString());
+            }
+            <%for (int i=0; i <  SourceTable.Columns.Count; i++){ %>
+            <%if (i==SourceTable.Columns.Count-1){ %>
+            strSql.Append("<%=SourceTable.Columns[i].Name %> ");
+            <%} else { %>
+            strSql.Append("<%=SourceTable.Columns[i].Name %>, ");
+            <%} %>
+            <%} %>     
+            
+            strSql.Append(" FROM <%=SourceTable.Name %> ");
+            
+            if (strWhere.Trim() != "")
+            {
+                strSql.Append(" where " + strWhere);
+            }
+            
+            strSql.Append(" order by " + filedOrder);
+            
+            return DbHelperSQL.Query(strSql.ToString());
+        }
+
+        /// <summary>
+        /// 获取记录总数
+        /// </summary>
+        public int GetRecordCount(string strWhere)
+        {
+            StringBuilder strSql = new StringBuilder();
+            
+            strSql.Append("select count(1) FROM <%=SourceTable.Name %> ");
+            
+            if (strWhere.Trim() != "")
+            {
+                strSql.Append(" where " + strWhere);
+            }
+            
+            object obj = DbHelperSQL.GetSingle(strSql.ToString());
+            
+            if (obj == null)
+            {
+                return 0;
+            }
+            else
+            {
+                return Convert.ToInt32(obj);
+            }
+        }
+        
+        /// <summary>
+        /// 分页获取数据列表
+        /// </summary>
+        public DataSet GetListByPage(string strWhere, string orderby, int startIndex, int endIndex)
+        {
+            StringBuilder strSql = new StringBuilder();
+            
+            strSql.Append("SELECT * FROM ( ");
+            strSql.Append(" SELECT ROW_NUMBER() OVER (");
+            if (!string.IsNullOrEmpty(orderby.Trim()))
+            {
+                strSql.Append("order by T." + orderby);
+            }
+            else
+            {
+                strSql.Append("order by T.<%=GetPrimaryKey() %> desc");
+            }
+            strSql.Append(")AS Row, T.*  from <%=SourceTable.Name %> T ");
+            if (!string.IsNullOrEmpty(strWhere.Trim()))
+            {
+                strSql.Append(" WHERE " + strWhere);
+            }
+            strSql.Append(" ) TT");
+            strSql.AppendFormat(" WHERE TT.Row between {0} and {1}", startIndex, endIndex);
+            
+            return DbHelperSQL.Query(strSql.ToString());
+        }
+
+        #endregion  基本方法
+    }
+}
+
+
+
+<script runat="template">
+public string CSharpType(ColumnSchema column)
+{
+ if (column.Name.EndsWith("TypeCode")) return column.Name;
+ switch (column.DataType)
+ {
+  case DbType.AnsiString:
+  case DbType.String:
+  case DbType.StringFixedLength:
+  case DbType.AnsiStringFixedLength: return "string";
+ 
+  case DbType.VarNumeric:
+  case DbType.Currency:
+  case DbType.Decimal: return "decimal?";
+ 
+  case DbType.Binary: return "byte[]";
+  case DbType.Boolean: return "bool?";
+  case DbType.Byte: return "byte";
+  case DbType.Date: return "DateTime?";
+  case DbType.DateTime: return "DateTime?";
+  case DbType.Double: return "double";
+  case DbType.Guid: return "Guid";
+  case DbType.Int16: return "short";
+  case DbType.Int32: return "int?";
+  case DbType.Int64: return "long";
+  case DbType.Object: return "object";
+  case DbType.SByte: return "sbyte";
+  case DbType.Single: return "float";
+  case DbType.Time: return "TimeSpan";
+  case DbType.UInt16: return "ushort";
+  case DbType.UInt32: return "uint";
+  case DbType.UInt64: return "ulong";
+  default:
+  {
+   return "__UNKNOWN__" + column.NativeType;
+  }
+ }
+}
+
+public string GetDataType(ColumnSchema column)
+{
+if (column.Name.EndsWith("TypeCode")) return column.Name;
+
+     switch (column.DataType)
+     {
+      case DbType.AnsiString: return "string";
+      case DbType.String: return "string";
+      case DbType.StringFixedLength: return "string";
+      case DbType.AnsiStringFixedLength: return "string";   
+     
+      case DbType.Int16: return "int";
+      case DbType.Int32: return "int";
+      case DbType.Int64: return "int";
+      case DbType.UInt16: return "int";
+      case DbType.UInt32: return "int";
+      case DbType.UInt64: return "int";
+     
+      case DbType.Time: return "string";
+      case DbType.Date: return "string";
+      case DbType.DateTime: return "string";
+     
+      case DbType.Binary: return "string";
+      case DbType.SByte: return "string";
+      case DbType.Byte: return "string";
+     
+      case DbType.VarNumeric: return "int";
+      case DbType.Currency: return "int";
+      case DbType.Decimal: return "int";
+     
+      case DbType.Single: return "int";
+      case DbType.Double: return "int";
+     
+      case DbType.Boolean: return "string";
+      case DbType.Guid: return "string";
+      case DbType.Object: return "string";
+      default:
+      {
+          return "string";
+      }
+
+    }
+
+}
+
+public string ClearPrefix(string name)
+{
+    int mIndex=name.IndexOf(TablePrefix);
+    string strResult=name.Remove(0,TablePrefix.Length);
+    return strResult;
+}
+
+public string GetPrimaryKey()
+{
+  return SourceTable.PrimaryKey.MemberColumns[0].Name;
+}
+</script>

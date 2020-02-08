@@ -1,0 +1,215 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="Generates a class including a special informational header" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import NameSpace="SchemaExplorer" %>
+<%@ Import NameSpace="System.Text" %>
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Default="" Optional="False" Category="Context" Description="源表名" %>
+<%@ Property Name="NameSpace" Type="String" Category="Context" Description="命名空间" %>
+<%@ Property Name="TablePrefix" Type="System.String" Default="T" Category="Context" Description="需要去除的表名前辍" %>
+/*------------------------------------------------
+// 文件名称：<%=ClearPrefix(SourceTable.Name) %>BLL.cs
+// 文件描述：<%=SourceTable.Description %>业务逻辑类
+// 作者:柳创义　　邮箱：99692145@qq.com
+// 创建时间：<%= DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")%>
+//------------------------------------------------*/
+
+using System;
+using System.Data;
+using System.Collections.Generic;
+using <%=NameSpace%>.Model;
+using <%=NameSpace%>.Model.Common;
+
+namespace <%=NameSpace%>.Bll
+{
+	/// <summary>
+    /// <%=SourceTable.Description %>
+    /// </summary>
+    public partial class <%=ClearPrefix(SourceTable.Name) %>BLL
+    {
+        private readonly <%=NameSpace%>.Dal.<%=ClearPrefix(SourceTable.Name) %>DAL dal = new <%=NameSpace%>.Dal.<%=ClearPrefix(SourceTable.Name) %>DAL();
+        
+        public <%=ClearPrefix(SourceTable.Name) %>BLL()
+        { }
+        #region  基本方法
+
+        /// <summary>
+        /// 得到最大ID
+        /// </summary>
+        public int GetMaxId()
+        {
+            return dal.GetMaxId();
+        }
+
+        /// <summary>
+        /// 是否存在该记录
+        /// </summary>
+        public bool Exists(int? <%=GetPrimaryKey()%>)
+        {
+            return dal.Exists(<%=GetPrimaryKey()%>);
+        }
+
+        /// <summary>
+        /// 增加一条数据
+        /// </summary>
+        public OperatorMessage Add(<%=NameSpace%>.Model.<%=ClearPrefix(SourceTable.Name) %>Model model)
+        {
+            return dal.Add(model);
+        }
+
+        /// <summary>
+        /// 更新一条数据
+        /// </summary>
+        public OperatorMessage Update(<%=NameSpace%>.Model.<%=ClearPrefix(SourceTable.Name) %>Model model)
+        {
+            return dal.Update(model);
+        }
+
+        /// <summary>
+        /// 删除一条数据
+        /// </summary>
+        public OperatorMessage Delete(int <%=GetPrimaryKey()%>)
+        {
+            return dal.Delete(<%=GetPrimaryKey()%>);
+        }
+
+        /// <summary>
+        /// 得到一个对象实体
+        /// </summary>
+        public <%=NameSpace%>.Model.<%=ClearPrefix(SourceTable.Name) %>Model GetModel(int <%=GetPrimaryKey()%>)
+        {
+            return dal.GetModel(<%=GetPrimaryKey()%>);
+        }
+
+        /// <summary>
+        /// 获得数据列表
+        /// </summary>
+        public DataSet GetList(string strWhere)
+        {
+            return dal.GetList(strWhere);
+        }
+        /// <summary>
+        /// 获得前几行数据
+        /// </summary>
+        public DataSet GetList(int Top, string strWhere, string filedOrder)
+        {
+            return dal.GetList(Top, strWhere, filedOrder);
+        }
+        /// <summary>
+        /// 获得数据列表
+        /// </summary>
+        public List<<%=NameSpace%>.Model.<%=ClearPrefix(SourceTable.Name) %>Model> GetModelList(string strWhere)
+        {
+            DataSet ds = dal.GetList(strWhere);
+            return DataTableToList(ds.Tables[0]);
+        }
+        /// <summary>
+        /// 获得数据列表
+        /// </summary>
+        public List<<%=NameSpace%>.Model.<%=ClearPrefix(SourceTable.Name) %>Model> DataTableToList(DataTable dt)
+        {
+            List<<%=NameSpace%>.Model.<%=ClearPrefix(SourceTable.Name) %>Model> modelList = new List<<%=NameSpace%>.Model.<%=ClearPrefix(SourceTable.Name) %>Model>();
+            int rowsCount = dt.Rows.Count;
+            if (rowsCount > 0)
+            {
+                <%=NameSpace%>.Model.<%=ClearPrefix(SourceTable.Name) %>Model model;
+                for (int n = 0; n < rowsCount; n++)
+                {
+                    model = dal.DataRowToModel(dt.Rows[n]);
+                    if (model != null)
+                    {
+                        modelList.Add(model);
+                    }
+                }
+            }
+            return modelList;
+        }
+
+        /// <summary>
+        /// 获得数据列表
+        /// </summary>
+        public DataSet GetAllList()
+        {
+            return GetList("");
+        }
+
+        /// <summary>
+        /// 分页获取数据列表
+        /// </summary>
+        public int GetRecordCount(string strWhere)
+        {
+            return dal.GetRecordCount(strWhere);
+        }
+        /// <summary>
+        /// 分页获取数据列表
+        /// </summary>
+        public DataSet GetListByPage(string strWhere, string orderby, int startIndex, int endIndex)
+        {
+            return dal.GetListByPage(strWhere, orderby, startIndex, endIndex);
+        }
+        /// <summary>
+        /// 分页获取数据列表
+        /// </summary>
+        //public DataSet GetList(int PageSize,int PageIndex,string strWhere)
+        //{
+        //return dal.GetList(PageSize,PageIndex,strWhere);
+        //}
+
+        #endregion  基本方法
+
+    }
+}
+
+<script runat="template">
+public string CSharpType(ColumnSchema column)
+{    
+ if (column.Name.EndsWith("TypeCode")) return column.Name;
+ switch (column.DataType)
+ {
+  case DbType.AnsiString:
+  case DbType.String:
+  case DbType.StringFixedLength:
+  case DbType.AnsiStringFixedLength: return "GetString";
+ 
+  case DbType.Int16:
+  case DbType.Int32:
+  case DbType.Int64:
+  case DbType.UInt16:
+  case DbType.UInt32:
+  case DbType.UInt64: return "GetInt";
+ 
+  case DbType.Time:
+  case DbType.Date:
+  case DbType.DateTime: return "GetDateTime";
+ 
+  case DbType.Binary:
+  case DbType.SByte:
+  case DbType.Byte: return "GetBytes";
+ 
+  case DbType.VarNumeric:
+  case DbType.Currency:
+  case DbType.Decimal: return "GetDecimal";
+ 
+  case DbType.Single:
+  case DbType.Double: return "GetDouble";
+ 
+  case DbType.Boolean: return "GetBoolean";
+  case DbType.Guid: return "GetGuid";
+  case DbType.Object: return "GetObject";
+  default:
+  {
+   return "__UNKNOWN__" + column.NativeType;
+  }
+ }
+}
+
+public string ClearPrefix(string name)
+{
+    int mIndex=name.IndexOf(TablePrefix);
+    string strResult=name.Remove(0,TablePrefix.Length);
+    return strResult;
+}
+
+public string GetPrimaryKey()
+{
+  return SourceTable.PrimaryKey.MemberColumns[0].Name;
+}
+</script>

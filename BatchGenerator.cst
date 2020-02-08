@@ -1,0 +1,108 @@
+﻿<%-- 
+文件名：批量生成实体模版
+作者：柳创义
+描述：使用模版批量生成实体代码文件
+--%>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="Generates a class including a special informational header" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Text" %>
+<%-- 注册实体层Entity模板 --%>
+
+<%-- 命名空间 --%>
+<%@ Property Name="NameSpace" Type="String" Category="Context" Description="命名空间" %>
+<%-- 需要去除的表名前辍 --%>
+<%@ Property Name="TablePrefix" Type="System.String" Default="T" Category="Context" Description="需要去除的表名前辍" %>
+
+<%-- 数据库 --%>
+<%@ Property Name="SourceDB" Type="SchemaExplorer.DatabaseSchema" Default="" Optional="False" Category="Context" Description="" OnChanged="" Editor="" EditorBase="" Serializer="" %>
+
+<%-- 注册实体层模板 --%>
+<%@ Register Name="ModelTemplate" Template="Model.cst" MergeProperties="Flase" ExcludeProperties=""%>
+<%-- 注册实体层模板 --%>
+<%@ Register Name="DalTemplate" Template="DAL.cst" MergeProperties="Flase" ExcludeProperties=""%>
+<%-- 注册实体层模板 --%>
+<%@ Register Name="BllTemplate" Template="BLL.cst" MergeProperties="Flase" ExcludeProperties=""%>
+
+<%
+//创建实体层Entity类
+this.GenerateEntityClasses();
+
+Debug.WriteLine("OK");
+%>
+
+<script runat="template">
+//解决方案输出路径
+private string Directory = String.Empty;
+
+[Editor(typeof(System.Windows.Forms.Design.FolderNameEditor), typeof(System.Drawing.Design.UITypeEditor))]
+[Optional, NotChecked]
+[DefaultValue("")]
+public string OutputDirectory
+{
+    get
+    {
+        return Directory;
+    }
+    set
+    {
+        if (value.EndsWith("\\")) value = value.Substring(0, value.Length -1);
+        Directory = value;
+    }
+}
+
+//生成实体Entity类
+private void GenerateEntityClasses()
+{
+    CodeTemplate modelTemplate =new ModelTemplate();
+    
+    foreach(TableSchema table in this.SourceDB.Tables)
+    {
+        string FileDirectory = OutputDirectory +"\\Model\\"+ ClearPrefix(table.Name) +"Model.cs";
+        //生成模板
+        modelTemplate.SetProperty("SourceTable",table);
+        modelTemplate.SetProperty("NameSpace",NameSpace);
+        modelTemplate.SetProperty("TablePrefix",TablePrefix);
+        //文件输出
+        modelTemplate.RenderToFile(FileDirectory,true);
+        Debug.WriteLine(FileDirectory +" 创建成功.");
+    }
+    
+    
+    CodeTemplate dalTemplate =new DalTemplate();
+    
+    foreach(TableSchema table in this.SourceDB.Tables)
+    {
+        string FileDirectory = OutputDirectory +"\\Dal\\"+ ClearPrefix(table.Name) +"DAL.cs";
+        //生成模板
+        dalTemplate.SetProperty("SourceTable",table);
+        dalTemplate.SetProperty("NameSpace",NameSpace);
+        dalTemplate.SetProperty("TablePrefix",TablePrefix);
+        //文件输出
+        dalTemplate.RenderToFile(FileDirectory,true);
+        Debug.WriteLine(FileDirectory +" 创建成功.");
+    }
+    
+    
+    CodeTemplate bllTemplate =new BllTemplate();
+    
+    foreach(TableSchema table in this.SourceDB.Tables)
+    {
+        string FileDirectory = OutputDirectory +"\\Bll\\"+ ClearPrefix(table.Name) +"BLL.cs";
+        //生成模板
+        bllTemplate.SetProperty("SourceTable",table);
+        bllTemplate.SetProperty("NameSpace",NameSpace);
+        bllTemplate.SetProperty("TablePrefix",TablePrefix);
+        //文件输出
+        bllTemplate.RenderToFile(FileDirectory,true);
+        Debug.WriteLine(FileDirectory +" 创建成功.");
+    }
+}
+//去除表名前辍
+public string ClearPrefix(string name)
+{
+    int mIndex=name.IndexOf(TablePrefix);
+    string strResult=name.Remove(0,TablePrefix.Length);
+    return strResult;
+}
+</script>
