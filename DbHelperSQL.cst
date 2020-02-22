@@ -14,6 +14,7 @@ using System.Data.SqlClient;
 using System.Windows.Forms;
 using System.Configuration;
 using System.Text;
+using CY.Common;
 
 namespace <%=Namespace%>.Dal
 {
@@ -48,10 +49,10 @@ namespace <%=Namespace%>.Dal
                 sqlPwd = ini.IniReadValue("Connection", "pwd");
 
                 string _key = "stzy1998";
-                sqlServer = CY.Common.EncryHelper.Decrypt(sqlServer, _key);
-                sqlDatabase = CY.Common.EncryHelper.Decrypt(sqlDatabase, _key);
-                sqlUid = CY.Common.EncryHelper.Decrypt(sqlUid, _key);
-                sqlPwd = CY.Common.EncryHelper.Decrypt(sqlPwd, _key); 
+                sqlServer = EncryHelper.Decrypt(sqlServer, _key);
+                sqlDatabase = EncryHelper.Decrypt(sqlDatabase, _key);
+                sqlUid = EncryHelper.Decrypt(sqlUid, _key);
+                sqlPwd = EncryHelper.Decrypt(sqlPwd, _key); 
 
                 string constr = "server=" + sqlServer + ";database=" + sqlDatabase + ";uid=" + sqlUid + ";pwd=" + sqlPwd;
                 return constr;
