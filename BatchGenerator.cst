@@ -101,8 +101,15 @@ private void GenerateEntityClasses()
 //去除表名前辍
 public string ClearPrefix(string name)
 {
-    int mIndex=name.IndexOf(TablePrefix);
-    string strResult=name.Remove(0,TablePrefix.Length);
-    return strResult;
+    string txtResult = name;
+    
+    int charLenth=TablePrefix.Length;
+    
+    if (name.Substring(0,charLenth)==TablePrefix)
+    {
+        txtResult = name.Remove(0,TablePrefix.Length); 
+    }
+
+    return txtResult;
 }
 </script>
