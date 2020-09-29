@@ -70,9 +70,9 @@ namespace <%=NameSpace%>.Dal
                 strField.Append("<%=SourceTable.Columns[i].Name %>,");               
                 <%string a=GetDataType(SourceTable.Columns[i]); %>              
                 <%if (a=="int") { %>
-                strValue.Append(""+model.<%=SourceTable.Columns[i].Name %>+", ");
+                strValue.Append(""+model.<%=SourceTable.Columns[i].Name %>+",");
                 <%} else { %>
-                strValue.Append("'"+model.<%=SourceTable.Columns[i].Name %>+"', ");
+                strValue.Append("'"+model.<%=SourceTable.Columns[i].Name %>+"',");
                 <%} %>                
             }
             
